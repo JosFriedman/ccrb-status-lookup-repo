@@ -30,8 +30,6 @@ public class CaseDaoTests extends BaseTest {
 	@Before
 	public void setUp() throws ParseException {
 		
-		CaseDaoImpl.yearsLookBack = 20;
-
 		//note: if this case fails, it might not be in the result set. 
 		test_case = caseDao.getCase(201510144);
 		sdf = new SimpleDateFormat("MM-dd-yyyy");
@@ -74,13 +72,4 @@ public class CaseDaoTests extends BaseTest {
 		assertTrue(test_case.getIncident_date().compareTo(compared_date) > 0);
 	}
 
-	@Test public void testRecievedDateTooOld() {
-
-		// put in future 
-		CaseDaoImpl.yearsLookBack = -1;
-
-		test_case = caseDao.getCase(201510144);
-		assertNull(test_case);
-
-	}
 }

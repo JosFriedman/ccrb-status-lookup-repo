@@ -19,15 +19,13 @@ public class CaseDaoImpl implements CaseDao {
 	@Autowired
 	private SessionFactory sessionFactory;
 	
-	public static int yearsLookBack = 3;
-	
 	@Override
 	public CaseEntity getCase(Integer id) {
 		//Make sure result is lte 3 years
 		Date today=new Date();
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(today);
-		cal.add(Calendar.YEAR, -yearsLookBack);
+		cal.add(Calendar.YEAR, -3);
 		Date ago = cal.getTime();
 		
 		Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(CaseEntity.class);
