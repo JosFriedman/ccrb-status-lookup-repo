@@ -19,7 +19,7 @@ public class CaseDaoImpl implements CaseDao {
 	@Autowired
 	private SessionFactory sessionFactory;
 	
-	public static int yearsLookBack = 3;
+	public static int yearsLookBack =  3;
 	
 	@Override
 	public CaseEntity getCase(Integer id) {

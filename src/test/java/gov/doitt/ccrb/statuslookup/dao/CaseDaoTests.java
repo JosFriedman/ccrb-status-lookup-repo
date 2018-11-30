@@ -81,6 +81,5 @@ public class CaseDaoTests extends BaseTest {
 
 		test_case = caseDao.getCase(201510144);
 		assertNull(test_case);
-
 	}
 }
