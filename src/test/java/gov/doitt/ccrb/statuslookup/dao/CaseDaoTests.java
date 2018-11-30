@@ -27,11 +27,15 @@ public class CaseDaoTests extends BaseTest {
 	private SimpleDateFormat sdf = null;
 	private Date compared_date = null;
 	
+	private int testCaseId = 201510144;
+	
 	@Before
 	public void setUp() throws ParseException {
 		
+		CaseDaoImpl.yearsLookBack = 20;
+
 		//note: if this case fails, it might not be in the result set. 
-		test_case = caseDao.getCase(201510144);
+		test_case = caseDao.getCase(testCaseId);
 		sdf = new SimpleDateFormat("MM-dd-yyyy");
 		compared_date = sdf.parse("01-01-1999");
 		
@@ -39,7 +43,7 @@ public class CaseDaoTests extends BaseTest {
 	
 	@Test
 	public void testGetCase_id() {
-		assertTrue(test_case.getCase_id().compareTo(201510144) == 0);
+		assertTrue(test_case.getCase_id().compareTo(testCaseId) == 0);
 	}
 	
 	@Test
@@ -72,4 +76,12 @@ public class CaseDaoTests extends BaseTest {
 		assertTrue(test_case.getIncident_date().compareTo(compared_date) > 0);
 	}
 
+	@Test public void testRecievedDateTooOld() {
+
+		// put in future 
+		CaseDaoImpl.yearsLookBack = -1;
+
+		test_case = caseDao.getCase(testCaseId);
+		assertNull(test_case);
+	}
 }
