@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project name="CCRB-STATUS-LOOKUP" default="compile" basedir=".">
+	<description>CCRB-STATUS-LOOKUP build file</description>
+
+	<dirname property="project.basedir" file="${ant.file}"/>
+
+	<property file="local.build.properties"/>
+	<property file="build.properties"/>
+
+	<!-- DISABLED
+	<propertyfile file="local.build.properties">
+		<entry key="local.build.number" value="1" type="int" operation="+" />
+	</propertyfile>
+	<property name="build.number" value="BUILD_${local.build.number}"/>
+	-->
+	<property name="compile.source" value="1.6"/>
+	<property name="compile.target" value="1.6"/>
+	<property environment="env"/>
+
+	<pathconvert property="pathconverted.basedir" dirsep="/">
+	    <path><pathelement location="${basedir}"/></path>
+	</pathconvert>
+	
+	<!--	Init Targets		-->
+	<target name="init">
+		<echo message="-------- ${ant.project.name} --------"/>
+		<echo message="-------- ant.java.version=${ant.java.version} --------"/>
+		<echo message="-------- project.basedir=${project.basedir} --------"/>		
+	</target>
+
+	<target name="create.version.txt">
+	    <echo message="${teamcity.projectName}_${teamcity.buildConfName}_${build.number}"
+	          file="${basedir}/build/version.txt"/>
+	</target>
+	
+	<target name="prepare" depends="init">
+		<mkdir dir="${basedir}/build/classes"/>
+	</target>
+	
+	<target name="clean" description="- -> Delete build sub-directories">
+		<delete dir="${basedir}/build"/>
+	</target>
+	
+	<path id="classpath.compilation">
+		<pathelement location="${basedir}/build/classes"/>
+		<fileset dir="${basedir}/web/WEB-INF/lib" includes="*.jar"/>
+		<fileset dir="${weblogic.home}/server/lib" includes="*.jar"/>
+	</path>
+
+	<!--	Compile Targets		-->
+	<target name="compile" depends="prepare" description="- -> Compiles only modified source files">
+		<javac	classpathref="classpath.compilation"
+			debug="true"
+			debuglevel="source,lines,vars"
+			destdir="${basedir}/build/classes"
+			source="${compile.source}"
+			target="${compile.target}">
+			<src path="${basedir}/src/main/java"/>
+		</javac>
+		<antcall target="compile.resources"/>		
+	</target>
+	
+	<!--	Forces recompilation of the entire codebase by deleting the
+		classes directory before invoking compile.
+	-->
+	<target name="recompile" description="Recompiles the entire codebase">
+		<delete dir="${basedir}/build/classes"/>
+		<antcall target="compile"/>
+	</target>
+	
+	<!--	"Compiles" (in the collection sense) any additional resources
+		(besides java class files, i.e., product license files, application
+		properties files, etc.) upon which the application depends, that
+		need to be collocated with class files due to being accessed through
+		class loaders.
+		Also runs resources through replacement filter.
+	-->
+	<target name="compile.resources">
+		<copy todir="${basedir}/build/classes" overwrite="true">
+			<fileset dir="${basedir}/src/main/java" includes="**/*.properties, **/*.xml"/>
+			<fileset dir="${basedir}/src/main/resources" includes="**/*.properties, **/*.xml, **/*.xsd"/>
+			<filterset begintoken="@@" endtoken="@@" onmissingfiltersfile="warn">
+				<filtersfile file="${basedir}/setup/${teamcity.projectName}_STG_data.properties"/>
+			</filterset>
+		</copy>
+	</target>
+
+	<!--	Package Targets     -->
+	<target name="package" depends="clean, compile" description="- -> Packages the application for deployment">
+		<mkdir dir="${basedir}/build/temp"/>
+		<war 	destfile="${basedir}/build/${ant.project.name}.war"
+				webxml="${basedir}/web/WEB-INF/web.xml"
+				basedir="${basedir}/build/temp">
+				<manifest>
+					<attribute name="Weblogic-Application-Version" value="${teamcity.projectName}_${teamcity.buildConfName}_${build.number}"/>
+				</manifest>			
+				<fileset dir="${basedir}/web">
+					<exclude name="WEB-INF/*junit*"/>
+					<!-- exclude static content served by the web server -->
+					<patternset id="externalized.static.content">
+						<exclude name="img/**" unless="${development}"/>
+						<exclude name="css/**" unless="${development}"/>
+						<exclude name="scripts/**" unless="${development}"/>
+					</patternset>
+				</fileset>
+				<classes dir="${basedir}/build/classes">
+					<exclude name="**/*Test*"/>
+					<patternset id="externalized.properties">
+						<exclude name="**/ccrbsl.properties" unless="${development}"/>
+						<exclude name="**/log4j.properties" unless="${development}"/>
+					</patternset>
+				</classes>
+		</war>
+		<delete dir="${basedir}/build/temp"/>		
+	</target>	
+
+	<!--	Unpackage Targets   -->
+	<target name="unpackage">
+		<mkdir dir="${basedir}/unpkgd"/>	
+		<unwar	src="${basedir}/build/${ant.project.name}.war"
+				dest="${basedir}/unpkgd/${ant.project.name}" />
+	</target>
+
+	<!--	Distribution Targets     -->
+	<target name="dist" depends="package" description="- -> Copies packaged application for distribution and deployment">
+		<copy file="${basedir}/build/${ant.project.name}.war" todir="${basedir}/dist" />
+	</target>
+	
+	<!--	Test Compilation		-->	
+	<path id="classpath.compilation.test">
+		<!-- fileset dir="${basedir}/lib/test" includes="*.jar"/ -->
+		<path refid="classpath.compilation"/>
+	</path>
+	
+	<path id="classpath.runtime.test">
+		<pathelement location="/opt/app_config/java_app"/>
+		<path refid="classpath.compilation.test"/>
+	</path>
+	
+	<target name="compile.test">
+		<javac classpathref="classpath.compilation.test"
+			debug="true"
+			debuglevel="source,lines,vars"
+			destdir="${basedir}/build/classes"
+			source="${compile.source}"
+			target="${compile.target}">
+			<src path="${basedir}/src/test/java"/>
+		</javac>
+		<antcall target="compile.test.resources"/>
+	</target>
+	
+	<target name="compile.test.resources">
+		<copy todir="${basedir}/build/classes" overwrite="true">
+			<fileset dir="${basedir}/src/test/resources" includes="**/*.properties, **/*.xml"/>
+		</copy>
+	</target>
+	
+	<!--	Test Targets		-->	
+	<target name="test" depends="compile.test" description="- -> Runs the project's test suite">
+		<junit haltonfailure="yes" printsummary="withOutAndErr" fork="yes">
+			<sysproperty key="socksProxyHost" value="bcpxy.nycnet"/>
+			<sysproperty key="socksProxyPort" value="1080"/>			
+			<classpath refid="classpath.runtime.test"/>
+			<formatter type="plain" />
+			<batchtest fork="yes">
+				<fileset dir="${basedir}/src/test/java">
+					<include name="**/*Test*.java" />
+				</fileset>
+			</batchtest>
+		</junit>		
+	</target>
+
+</project>
