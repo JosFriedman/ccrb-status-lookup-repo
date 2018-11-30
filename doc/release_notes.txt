@@ -1,0 +1,23 @@
+Release Notes
+
+Product Name:  CCRB Status Lookup
+
+Release Number: 1.1.1
+1. property file & migrations doc cleanup
+
+Release Number: 1.1.0
+
+1. Modified code to implement ReCAPTCHA v2b.
+2. Added unit tests for 60% coverage.
+3. Reworked ant script for easier local building.
+
+Release Number: 1.0.1
+
+Review migration_procedure.txt for deployment steps.
+
+1. Added staging table for ETL team. No code changes required, only schema changes.
+2. Fixed ant script to resolve property file issues during deployment. 
+
+Release Number: 1.0
+
+1. Initial release

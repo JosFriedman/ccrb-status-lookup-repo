@@ -1,0 +1,42 @@
+Version 1.1.1
+Migration Steps:
+Parameterized property file in /setup as per support instruction
+removed property files for tst, stg & prd from /setup
+ 
+*Important to note:
+-The property ccrbsl.captchapubkey has been removed and the property ccrbsl.captchapassword has been added.
+-The Captcha url format has changed since we now use captcha v2:
+IE
+OLD - http://nyc-tst-web.csc.nycnet/apps/doittcaptchaservice/doittCaptchaService 
+NEW - http://nyc-tst-web.csc.nycnet/doittcaptchaservice/validate.htm?version=2
+
+Version 1.1.0
+Migration Steps:
+(Local Dev Environment Only): make sure you create a local.build.properties files as per example in build.xml.
+Make sure this file is ignored so it's never checked into SVN.
+
+1. For each environment, a CAPTCHA username and password must be obtained from Portal Support or Michael Bacarella.
+   When requesting the username and password, provide the Environment name (ex. TST), the Application Name (CCRB Complaint Status),
+   and the application URL (ex. http://nyc-tst-web.csc.nycnet/apps/ccrb-status-lookup).
+2. In /ccrb-status-lookup/setup/ open the appropriate properties file for the environment being deployed to.
+   Ensure that the ccrbsl.captachausername property value is set to the CAPTCHA username provided Portal Support (ex. CCRB Complaint Status).
+   Replace the ccrbsl.captchapassword property value with the CAPTCHA password provided by Portal Support.
+   If the password contains a backslash character (\) you must escape the character by placing another backslash in front of it (\\)
+3. Copy the modified properties file to /ccrb-status-lookup/src/main/resources/gov/nyc/doitt/ccrb/statuslookup/ccrbsl.properties
+
+Version 1.0.1 (Support Release)
+Migration Steps:
+
+1. Run schema_additiona_v1.0.1.sql
+
+Version 1.0 (Initial Release)
+Migration Steps:
+
+1. Run schema.sql (Only if the CCRBSL_MASTER schema is empty for that environment) 
+2. Run data.sql (Only if the CCRBSL_MASTER schema is empty for that environment)
+3. Create appsCCRBSLDS datasource in WEBLOGIC that logs into portal db using CCRBSL_READONLY credentials
+4. make sure /opt/logs/ccrb/ exists on app servers with appropriate permissions.
+5. make sure entry exists in mod_wl_ohs.conf for /apps/ccrb-status-lookup on webservers and is pointing to shared domain cluster
+6. make sure "shared=1301=CCRB_STATUS_LOOKUP" entry exists in /export/local/weblogic/scripts/wldomains.txt 
+8. Deploy CCRB_STATUS_LOOKUP build using automated deployment script.
+9. Confirm http://<env>/apps/ccrb-status-lookup/ is returning results for at least one of the following cases:
